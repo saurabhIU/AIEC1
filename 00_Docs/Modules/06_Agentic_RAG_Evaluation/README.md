@@ -27,7 +27,7 @@
 - [LLM-as-a-Judge](https://en.wikipedia.org/wiki/LLM-as-a-Judge)
 - [Self-Refine](https://arxiv.org/abs/2303.17651) (Mar 2023)
 - [RAGAS](https://arxiv.org/abs/2309.15217) (Sep 2023)
-- [Lessons from Improving AI Applications](https://vibrantlabs.com/research/ragas/hard-earned-lessons-from-2-years-of-improving-ai-applications) (May 2025)
+- [Lessons from Improving AI Applications](https://blog.ragas.io/hard-earned-lessons-from-2-years-of-improving-ai-applications) (May 2025)
 - [In Defense of Evals](https://www.sh-reya.com/blog/in-defense-ai-evals/) (Sep 2025)
 
 # 🗺️ Overview
@@ -41,7 +41,7 @@ What if we had a generic framework to answer the “Is my app good, right, or co
 
 </aside>
 
-In module 6, we explore a generic framework that does exactly this, built specifically to assess Retrieval Augmented Generation (RAG) systems.  Meet RAG ASsessment (RAGAS), the leading-edge evaluation tool for RAG applications.  RAGAS ([YC24](https://www.ycombinator.com/companies/ragas)) is attempting to develop the industry standard for analyzing RAG applications, and they’ve made great strides and progress in the last year!
+In module 8, we explore a generic framework that does exactly this, built specifically to assess Retrieval Augmented Generation (RAG) systems.  Meet RAG ASsessment (RAGAS), the leading-edge evaluation tool for RAG applications.  RAGAS ([YC24](https://www.ycombinator.com/companies/ragas)) is attempting to develop the industry standard for analyzing RAG applications, and they’ve made great strides and progress in the last year!
 
 Today we’ll dig into the metrics we can use across RAG applications. We’ll look at their definitions and how they’re calculated, and reflect on how we would think about leveraging them!
 
