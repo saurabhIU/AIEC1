@@ -11,6 +11,7 @@ from .oauth import CatShopOAuthProvider
 
 ISSUER_URL = os.environ.get("ISSUER_URL", "http://localhost:8000")
 
+
 oauth_provider = CatShopOAuthProvider(issuer_url=ISSUER_URL)
 
 mcp = FastMCP(
