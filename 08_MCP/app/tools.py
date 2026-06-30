@@ -56,6 +56,28 @@ async def get_product(product_id: int) -> dict:
 
 
 @mcp.tool()
+async def search_products(query: str) -> list[dict]:
+    """Search for products by name or description."""
+    db = await oauth_provider._get_db()
+    cursor = await db.execute("SELECT id, name, description, price, category FROM products WHERE name LIKE ? OR description LIKE ?", (f"%{query}%", f"%{query}%"))
+    rows = await cursor.fetchall()
+    return [
+        {"id": r[0], "name": r[1], "description": r[2], "price": r[3], "category": r[4]}
+        for r in rows
+    ]
+
+@mcp.tool()
+async def update_cart_quantity(product_id: int, quantity: int) -> dict:
+    """Update the quantity of a product in your shopping cart."""
+    username = await _get_username()
+    db = await oauth_provider._get_db()
+    await db.execute("UPDATE cart_items SET quantity = ? WHERE username = ? AND product_id = ?", (quantity, username, product_id))
+    await db.commit()
+    return {"success": True, "message": f"Updated quantity of {product_id} to {quantity}"}
+
+
+
+@mcp.tool()
 async def add_to_cart(product_id: int, quantity: int = 1) -> dict:
     """Add a product to your shopping cart. If already in cart, quantity is increased."""
     username = await _get_username()
