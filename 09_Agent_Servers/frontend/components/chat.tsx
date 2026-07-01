@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useStream } from "@langchain/react";
 import { Bot, FileText, Loader2, Search, Wrench } from "lucide-react";
 
@@ -32,7 +33,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getMessageText, toolLabel } from "@/lib/messages";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+function resolveApiUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured) return configured;
+  if (typeof window !== "undefined") return `${window.location.origin}/api`;
+  return "/api";
+}
 
 type StreamMessage = ReturnType<typeof useStream>["messages"][number];
 
@@ -53,7 +59,8 @@ function roleFrom(type: string): "user" | "assistant" {
 }
 
 export function Chat({ assistantId }: { assistantId: string }) {
-  const stream = useStream({ apiUrl: API_URL, assistantId });
+  const [apiUrl] = useState(resolveApiUrl);
+  const stream = useStream({ apiUrl, assistantId });
   const { messages, isLoading, error } = stream;
 
   const send = (text: string) => {
