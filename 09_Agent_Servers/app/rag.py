@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated
 
 import tiktoken
-from langchain_community.document_loaders import DirectoryLoader, PyMuPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_core.tools import tool
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
@@ -18,14 +19,19 @@ def _tiktoken_len(text: str) -> int:
     return len(tiktoken.encoding_for_model("gpt-4o").encode(text))
 
 
+def _load_pdf_documents(data_dir: str):
+    documents = []
+    for pdf_path in Path(data_dir).rglob("*.pdf"):
+        documents.extend(PyMuPDFLoader(str(pdf_path)).load())
+    return documents
+
+
 @lru_cache(maxsize=1)
 def _get_retriever():
     data_dir = os.environ.get("RAG_DATA_DIR", "data")
 
     try:
-        documents = DirectoryLoader(
-            data_dir, glob="**/*.pdf", loader_cls=PyMuPDFLoader
-        ).load()
+        documents = _load_pdf_documents(data_dir)
     except Exception:
         documents = []
 

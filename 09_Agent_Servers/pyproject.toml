@@ -21,3 +21,12 @@ dependencies = [
     "arxiv>=2.1.0",
     "python-dotenv>=1.2.2",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"

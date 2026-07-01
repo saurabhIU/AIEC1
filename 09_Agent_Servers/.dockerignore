@@ -1,0 +1,27 @@
+# Frontend (not needed in the LangGraph API image)
+frontend/
+
+# Secrets — inject via Vercel env vars at runtime
+.env
+.env.*
+!.env.example
+
+# Python local dev
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.python-version-local
+
+# LangGraph local dev state
+.langgraph_api/
+
+# Git / editor / OS
+.git/
+.gitignore
+.DS_Store
+.cursor/
+
+# Docs — keep README.md (referenced by pyproject.toml for the package build)
+*.md
+!README.md

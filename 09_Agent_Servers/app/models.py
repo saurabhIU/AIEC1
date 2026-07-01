@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 DEFAULT_CHAT_MODEL = "gpt-5.4-mini"
 
@@ -12,5 +13,5 @@ def get_chat_model(model_name: str | None = None, *, temperature: float = 0) -> 
     return ChatOpenAI(
         model=name,
         temperature=temperature,
-        openai_api_key=os.environ["OPENAI_API_KEY"],
+        api_key=SecretStr(os.environ["OPENAI_API_KEY"]),
     )
