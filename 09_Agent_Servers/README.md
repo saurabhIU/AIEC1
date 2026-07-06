@@ -1,5 +1,3 @@
-
-
 # Session 9: Agent Servers
 
 ### [Quicklinks]()
@@ -469,7 +467,34 @@ Why does LangSmith deploy your agent as an API backend only, and why do you stil
 
 #### Answer
 
-*(insert your answer here)*
+*The main idea is to separate backend AI logic and user interface.*
+
+When an agent is deployed through LangSmith, it provisons the **agent runtime**. It exposes an HTTP API that accepts requests, runs graph/agent, and returns responses.
+
+The deployment does **not** include:
+
+- Login pages
+- Chat UI
+- Authentication
+- Dashboards
+- Mobile interface
+- Buttons and forms
+- File upload screens
+- User profile pages
+
+It is simply an API and is optimized for running AI agents.
+
+It is **not** designed to host:
+
+- React apps
+- HTML/CSS
+- JavaScript bundles
+- Images
+- Authentication flows
+- Stripe checkout
+- Static assets
+
+**Vercel** hosts the web application that users interact with. This separation of concerns is the standard architecture for modern AI applications because it improves scalability, maintainability, security, and the ability to support multiple client applications from a single agent backend.
 
 ### Question #2
 
@@ -477,7 +502,15 @@ Why should the LangSmith API key live in a Next.js API route (server-side) inste
 
 #### Answer
 
-*(insert your answer here)*
+The LangSmith API key should live in a **Next.js API route (server-side)** because it is a **secret credential**. Anything sent to the browser should be considered public. 
+
+If its kept in browser and since this code runs in the browser:
+
+- Users can inspect it using Developer Tools.
+- They can view the network requests.
+- They can extract the API key from the JavaScript bundle.
+
+Once exposed, anyone could use your key to call your LangSmith deployment, potentially consuming your quota or incurring costs.
 
 ## Activity 1: Build a Helpfulness Loop in Production
 
