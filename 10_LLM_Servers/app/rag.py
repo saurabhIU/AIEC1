@@ -3,7 +3,7 @@
 This module builds an in-memory RAG pipeline that:
 - Loads PDF documents from `RAG_DATA_DIR` (default: "data").
 - Splits documents into chunks using a token-aware splitter.
-- Embeds chunks with OpenAI and stores vectors in an in-memory Qdrant store.
+- Embeds chunks with OpenAI/Fireworks and stores vectors in an in-memory Qdrant store.
 - Exposes a LangChain Tool `retrieve_information` that retrieves relevant
   context and generates a response constrained to that context.
 """
@@ -25,11 +25,22 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from langgraph.graph import START, StateGraph
 
+from dataclasses import dataclass, field
 
-def _tiktoken_len(text: str) -> int:
+def tiktoken_len(text: str) -> int:
     """Return token length using tiktoken; used for chunk length measurement."""
     tokens = tiktoken.encoding_for_model("gpt-4o").encode(text)
     return len(tokens)
+
+@dataclass(frozen=True)
+class RAGProviderConfig:
+    name: str  # "fireworks" or "openai"
+    embedding_model_name: str
+    chat_model: str
+    api_key: str
+    api_base: str | None = None
+    embedding_kwargs: dict = field(default_factory=dict)
+
 
 
 class _RAGState(TypedDict):
@@ -40,7 +51,7 @@ class _RAGState(TypedDict):
     response: str
 
 
-def _build_rag_graph(data_dir: str):
+def _build_rag_graph(data_dir: str, provider_config: RAGProviderConfig):
     """Construct and compile a minimal RAG graph.
 
     Steps:
@@ -63,23 +74,23 @@ def _build_rag_graph(data_dir: str):
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=750, chunk_overlap=0, length_function=_tiktoken_len
+        chunk_size=int(os.environ.get("RAG_CHUNK_SIZE", 900)), 
+        chunk_overlap=int(os.environ.get("RAG_CHUNK_OVERLAP", 70)), length_function=tiktoken_len
     )
     chunks = text_splitter.split_documents(documents) if documents else []
 
     # Embeddings and vector store (in-memory Qdrant)
     embedding_model = OpenAIEmbeddings(
-        model=os.environ.get("FIREWORKS_EMBEDDING_MODEL", "accounts/fireworks/models/qwen3-embedding-8b"),
-        openai_api_key=os.environ["FIREWORKS_API_KEY"],
-        openai_api_base="https://api.fireworks.ai/inference/v1",
-        check_embedding_ctx_length=False,
-        dimensions=4096,
+        model=provider_config.embedding_model_name,
+        openai_api_key=provider_config.api_key,
+        openai_api_base=provider_config.api_base,
+        **provider_config.embedding_kwargs,
     )
     qdrant_vectorstore = QdrantVectorStore.from_documents(
         documents=chunks,
         embedding=embedding_model,
         location=":memory:",
-        collection_name="rag_collection",
+        collection_name=f"rag_collection_{provider_config.name}",
     )
     retriever = qdrant_vectorstore.as_retriever()
 
@@ -91,9 +102,9 @@ def _build_rag_graph(data_dir: str):
     )
     chat_prompt = ChatPromptTemplate.from_messages([("human", human_template)])
     generator_llm = ChatOpenAI(
-        model=os.environ.get("FIREWORKS_CHAT_MODEL", "accounts/fireworks/models/gpt-oss-20b"),
-        openai_api_key=os.environ["FIREWORKS_API_KEY"],
-        openai_api_base="https://api.fireworks.ai/inference/v1",
+        model= provider_config.chat_model,
+        openai_api_key=provider_config.api_key,
+        openai_api_base=provider_config.api_base,
     )
 
     def retrieve(state: _RAGState) -> _RAGState:
@@ -113,11 +124,21 @@ def _build_rag_graph(data_dir: str):
     return graph_builder.compile()
 
 
-@lru_cache(maxsize=1)
-def _get_rag_graph():
+@lru_cache(maxsize=2)
+def get_rag_graph(provider:str = "fireworks"):
     """Return a cached compiled RAG graph built from RAG_DATA_DIR."""
     data_dir = os.environ.get("RAG_DATA_DIR", "data")
-    return _build_rag_graph(data_dir)
+    return _build_rag_graph(data_dir, config_for_provider(provider))
+
+def config_for_provider(provider: str) -> RAGProviderConfig:
+    from eval.providers import get_fireworks_config, get_openai_config
+
+    if provider == "fireworks":
+        return get_fireworks_config()
+    elif provider == "openai":
+        return get_openai_config()
+    else:
+        raise ValueError(f"Invalid provider: {provider}")
 
 
 @tool
@@ -125,7 +146,7 @@ def retrieve_information(
     query: Annotated[str, "query to ask the retrieve information tool"],
 ):
     """Use Retrieval Augmented Generation to retrieve information about feline health, including life stage care, nutrition, vaccinations, parasite control, behavior, diagnostics, and veterinary guidelines for cats."""
-    graph = _get_rag_graph()
+    graph = get_rag_graph("fireworks")
     result = graph.invoke({"question": query})
     # Prefer returning the response string if available
     if isinstance(result, dict) and "response" in result:
