@@ -1,0 +1,37 @@
+---
+description: Session 14 multimodal RAG API conventions (LangChain v1, CLIP, Qdrant)
+globs: ["**/*.py", "**/*.ipynb"]
+alwaysApply: false
+---
+
+# Multi-Modal RAG — pinned API intent
+
+Keep suggestions aligned with this session’s stack. Do not revert to older LangChain image or embedding APIs.
+
+## Image content blocks (LangChain v1)
+
+Pass images as content blocks, not legacy `image_url` message shapes:
+
+```python
+{"type": "image", "source_type": "base64", "data": b64, "mime_type": mime}
+```
+
+## Embeddings vs pixels
+
+- LangChain embedding interfaces are **text-only**.
+- For image vectors (and text→image retrieval in a shared space), use **CLIP** via `sentence-transformers`.
+- Do not pretend an OpenAI text embedder can embed raw PNG bytes.
+
+## Models and vector store
+
+- Every chat / VLM call goes through `init_chat_model(VLM_MODEL)` (model-agnostic).
+- Vector store: **Qdrant**. Prefer `QdrantClient(":memory:")` for notebook / local dev.
+
+## Secrets
+
+- Never hard-code API keys.
+- Read from `os.environ` / a `.env` file loaded with `python-dotenv`.
+
+## Project shape (when leaving the notebook)
+
+Prefer graduating working cells into modules such as `ingest.py`, `retrieve.py`, `generate.py`.
